@@ -1,95 +1,123 @@
 
-
+var request = require("request");
 require("dotenv").config();
-var Spotify = require("node-spotify-api");
+// var Spotify = require("node-spotify-api");
+var spotify = require('spotify');
 var Twitter = require("twitter");
 var omdbApi = require('omdb-client');
-var request = require("request");
-
+//var request = require("request");
+var request = require('request');
+var input1 = process.argv[2];
+var input2 = process.argv[3];
 var keys = require("./keys");
-
-var command = process.argv[2];
-
-if(command === "my-tweets"){
-
-}
-
-switch(command){
-    case "my-tweets":
-        getMyTweets();
-        break;
-    case "spotify-this-song":
-        getSong();
-        break;
-    case "movie-this":
-        getMovie();
-        break;
-    default:
-        console.log("That's not a valid command");
-        break;
-}
+var fs = require("fs");
 
 
-function getMyTweets(){
-    console.log("Getting my tweets...");
 
-    var client = new Twitter(keys.twitter);
-
-    var params = {screen_name: 'cnn'};
-
-    client.get('statuses/user_timeline', params, function(error, tweets, response) {
+var getMyTweets = function () {
+    var Twitter = require('twitter');
+    var client = new Twitter(keys.twitterKeys);
+    var params = { screen_name: 'babatunde_bootcamp' };
+    client.get('statuses/user_timeline', params, function (error, tweets, response) {
         if (!error) {
-            for(var i = 0; i < tweets.length; i++){
+            console.log(tweets);
+            for (var i = 0; i < tweets.length; i++) {
+                console.log(tweets[i].created_at);
                 console.log(tweets[i].text);
             }
-            
         }
+        console.log("twitter account issues");
     });
 }
 
-function getSong(){
-    var spotify = new Spotify(keys.spotify);
+
  
-    spotify.search({ type: 'track', query: 'All the Small Things' }, function(err, data) {
-        if (err) {
-            return console.log('Error occurred: ' + err);
-        }
-        
-        console.log(data.tracks.items[0]); 
-    });
+var Spotify = require('node-spotify-api'); 
+var spotify = new Spotify(keys.spotify);
+
+var getArtistNames = function(artist){
+    return artist.name;
+}
+
+var spotifyThis = function(songName){
+spotify.search({ type: 'track', query: songName }, function(err, data) {
+  if (err) {
+    return console.log('Error occurred: ' + err);
+  }
+ 
+//console.log(data.tracks.items[0]);
+var songs = data.tracks.items; 
+for(var i = 0; i<songs.length; i++){
+    console.log(i);
+    console.log("Artite:  "+ songs[i].artists.map(getArtistNames));
+    console.log("song name  "+ songs[i].name);
+    console.log("album: "+ songs[i].album.name);
+    console.log("------------------------------------------------------------------------")
+}
+});
 }
 
 
-function getMovie(){
-
-var URL = "http://www.omdbapi.com/?s=terminator&apikey=73104e7a";
-
-    request(URL, function(err, response, body) {
-      // parse the response body (string) to a JSON object
-      var jsonData = JSON.parse(body);
-      console.log("The title of the Movie :" +jsonData.Search[0].Title);
-      console.log("The year of production :" +jsonData.Search[0].Year);
-      console.log("The type of Movie :" +jsonData.Search[0].Type);
-
-      // showData ends up being the string containing the show data we will print to the console
-    //   var showData = [
-    //     "Show: " + jsonData.name,
-    //     "Genre(s): " + jsonData.genres.join(", "),
-    //     "Rating: " + jsonData.rating.average,
-    //     "Network: " + jsonData.network.name,
-    //     "Summary: " + jsonData.summary
-    //   ].join("\n\n");
-
-      // Append showData and the divider to log.txt, print showData to the console
-    //   fs.appendFile("log.txt", showData + divider, function(err) {
-    //     if (err) throw err;
-    //     console.log(showData);
-    //   });
-    });
-    //var omdbclient = new omdbclient(keys.omdbclient);
-
-    
-  };
+var mymovie = function(movieName){
+request(' http://www.omdbapi.com/?s='+ movieName +'&apikey=73104e7a', function (error, response, body) {
+  console.log('error:', error); // Print the error if one occurred
+  console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+  //console.log('body:', body); // Print the HTML for the Google homepage.
+  var jsonMovieData = JSON.parse(body);
+  //console.log(jsonMovieData);
+  for (var i = 0; i < jsonMovieData.Search.length; i++){
+  console.log("Title:  "+ jsonMovieData.Search[i].Title);
+  console.log("Year  "+ jsonMovieData.Search[i].Year);
+  console.log("iIMDB Rated  "+ jsonMovieData.Search[i].imdbID);
+  //console.log("IMDB Rating:  "+ jsonMovieData.Title);
+  //console.log("Count:  "+ jsonMovieData.Title);
+  }
+});
+}
 
 
 
+
+  var executeAct = function(){
+       fs.readFile('random.txt', 'utf8', function(err, data){
+    if (err) throw err;
+    //console.log(data);
+            var info = data.split(",");
+            if (info.length == 2){
+            pick(info[0],info[1]);
+            }
+            else if(info.length ==1){
+                pick(info[0]);
+            }
+
+  }); 
+
+  }
+
+
+var pick = function (caseData, FunctionData) {
+    switch (caseData) {
+        case "my-tweets":
+            // console.log("twitter may not work");
+            getMyTweets();
+            break;
+        case "my-spotify":
+        spotifyThis(FunctionData);
+            break;
+
+        case "my-movie":
+            mymovie(FunctionData);
+            break;
+        case "my-read":
+            executeAct();
+            break;
+        default:
+            console.log("nothing selected to execute!!!!")
+    }
+}
+
+var runThis = function (argOne, argTwo) {
+    pick(argOne, argTwo);
+};
+
+runThis(input1, input2);
